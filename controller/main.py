@@ -1,0 +1,313 @@
+from os import environ
+from time import sleep, time
+import argparse
+
+import serial
+import serial.tools.list_ports
+
+environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+import pygame
+
+from shunkei_sdk import ShunkeiVTX
+
+DEFAULT_PORT = 12334
+
+center_steer = 93.3
+steer_trim = 0
+
+last_called_dict = {}
+def throttle(interval, key):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            import time
+            global last_called_dict
+            last_called = last_called_dict.get(key, 0)
+            if time.time() - last_called < interval:
+                return
+            last_called_dict[key] = time.time()
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+def con2duty_simple(j, limit):
+    global steer_trim
+    x = j.get_axis(0)
+    if abs(x) < 0.1:
+        x = 0
+    y = j.get_axis(3)
+    if abs(y) < 0.1:
+        y = 0
+
+    steer = center_steer + (15*x) + steer_trim
+    speed = 90 + (15*y) * limit / 10
+
+    # if j.get_button(4):
+    #     steer_trim -= 0.1
+    # elif j.get_button(5):
+    #     steer_trim += 0.1
+
+    #print(f"steer:{steer}, speed:{speed}")
+    return steer, speed
+
+def con2duty_speedLimit(j, limit):
+    if limit > 10:
+        limit = 10
+
+    x = j.get_axis(0)
+    if abs(x) < 0.1:
+        x = 0
+    steer = center_steer + (15*x)
+
+    accel = j.get_button(3)
+    brake = j.get_button(2)
+    speed = 90
+    if brake:
+        speed = 90 + (15) * limit / 10
+    elif accel:
+        speed = 90 - (15) * limit / 10
+
+    #print(f"steer:{steer}, speed:{speed}")
+    return steer, speed
+
+def con2duty_wheel(j, limit):
+    global steer_trim
+
+    x = j.get_axis(0)
+    # if abs(x) < 0.1:
+    #     x = 0
+
+    accel = (j.get_axis(5) + 1) / 2
+    brake = (j.get_axis(4) + 1) / 2
+    y = -(accel - brake)
+    if abs(y) < 0.1:
+        y = 0
+
+    if y > 0:
+        # if back
+        y = y * limit * 0.5
+    
+    steer = center_steer+ (15*x) + steer_trim
+    speed = 90+ (15*y) * limit / 10
+
+    # if j.get_button(9):
+    #     steer_trim -= 0.1
+    # elif j.get_button(10):
+    #     steer_trim += 0.1
+
+    #print(f"steer:{steer}, speed:{speed}")
+    return steer, speed
+
+def con2duty_wheel_ffb(j, limit):
+    global steer_trim
+
+    x = j.get_axis(0)
+    # if abs(x) < 0.1:
+    #     x = 0
+    x *= 5
+    if x > 1:
+        x = 1
+    if x < -1:
+        x = -1
+
+    accel = (j.get_axis(3) + 1) / 2
+    brake = (j.get_axis(2) + 1) / 2
+    y = -(accel - brake)
+    if abs(y) < 0.1:
+        y = 0
+
+    if y > 0:
+        # if back
+        y = y * limit * 0.5
+    
+    steer = center_steer+ (15*x) + steer_trim
+    speed = 90+ (15*y) * limit / 10
+
+    # if j.get_button(9):
+    #     steer_trim -= 0.1
+    # elif j.get_button(10):
+    #     steer_trim += 0.1
+
+    #print(f"steer:{steer}, speed:{speed}")
+    return steer, speed
+
+
+def serial_auto_connect() -> serial.Serial:
+    ports = list(serial.tools.list_ports.comports())
+    for p in ports:
+        if "Pico" in p.description:
+            print("Connecting to Pico...: ", p.device)
+            return serial.Serial(p.device)
+    else:
+        raise IOError("No Pico found")
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--host", help="host name")
+    parser.add_argument("-a", "--algo", type=int, default=0, help="algo number")
+    parser.add_argument("-s", "--speed", type=int, default=5, help="max speed adjustment")
+    parser.add_argument("-w", "--webrtc", action="store_true", help="use webrtc")
+    parser.add_argument("--room-id", help="room id")
+    parser.add_argument("--serial", action="store_true", help="use serial")
+    args = parser.parse_args()
+
+    speed_level = args.speed
+    alive = False
+
+    pygame.init()
+    pygame.font.init()
+    font = pygame.font.SysFont("Grobold", 40)
+    screen = pygame.display.set_mode((400, 300)) 
+
+    if args.serial:
+        ser = serial_auto_connect()
+
+    j = pygame.joystick.Joystick(0)
+    j.init()
+    print(f"Joystick: {j.get_name()}")
+
+    # exponential backoff
+    while True:
+        sleep(1)
+        try:
+            # set up host and port
+            if args.webrtc:
+                roomId = args.room_id
+                if roomId is None:
+                    print("room id must be specified when using webrtc")
+                    parser.print_help()
+                    exit(1)
+                vtx = ShunkeiVTX.connect_via_webrtc(roomId)
+                print(f"Connected to room {roomId} via webrtc")
+            elif args.host is None:
+                vtx = ShunkeiVTX.auto_connect()
+                print(f"device found: {vtx.host}")
+            elif ":" in args.host:
+                host, port = args.host.split(":")
+                vtx = ShunkeiVTX.connect_via_ip(host, int(port))
+            else:
+                vtx = ShunkeiVTX.connect_via_ip(args.host, DEFAULT_PORT)
+
+            last_keep_alive = 0
+
+            print("Waiting for input...")
+            while True:
+                buf = vtx.read(1024)
+                if buf is not None:
+                    lines = buf.decode().split("\n")
+                    for line in lines:
+                        line = line.strip()
+                        if line == "":
+                            continue
+                        if line == "k":
+                            last_keep_alive = time()
+
+                if time() - last_keep_alive > 0.1:
+                    alive = False
+                else:
+                    alive = True
+
+                if args.serial:
+                    if ser.in_waiting > 0:
+                        buf = ser.readline().decode('utf-8').strip()
+                        try:
+                            val = int(buf)
+                            speed_level = val
+                        except ValueError:
+                            pass
+
+                events = pygame.event.get()
+                for event in events:
+                    # keyboard
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_UP:
+                            if speed_level < 10:
+                                speed_level += 1
+                        elif event.key == pygame.K_DOWN:
+                            if speed_level > 1:
+                                speed_level -= 1
+                        elif event.key == pygame.K_1:
+                            speed_level = 1
+                        elif event.key == pygame.K_2:
+                            speed_level = 2
+                        elif event.key == pygame.K_3:
+                            speed_level = 3
+                        elif event.key == pygame.K_4:
+                            speed_level = 4
+                        elif event.key == pygame.K_5:
+                            speed_level = 5
+                        elif event.key == pygame.K_6:
+                            speed_level = 6
+                        elif event.key == pygame.K_7:
+                            speed_level = 7
+                        elif event.key == pygame.K_8:
+                            speed_level = 8
+                        elif event.key == pygame.K_9:
+                            speed_level = 9
+                        elif event.key == pygame.K_0:
+                            speed_level = 10
+                    elif event.type == pygame.QUIT:
+                        raise KeyboardInterrupt()
+                events = pygame.event.pump()
+                if args.algo==0:
+                    steer, speed = con2duty_simple(j, speed_level)
+                elif args.algo==1:
+                    steer, speed = con2duty_speedLimit(j, speed_level) 
+                elif args.algo==2:
+                    steer, speed = con2duty_wheel(j, speed_level)
+                elif args.algo==3:
+                    steer, speed = con2duty_wheel_ffb(j, speed_level)
+                else:
+                    print("invalid algo number")
+                    exit(1)
+                vtx.write(f"{int(steer)} {int(speed)} \n".encode())
+
+                @throttle(0.1, "update_caption")
+                def update_caption():
+                    print(f"\r[{'alive' if alive else 'dead'}] steer:{steer:.2f}, speed:{speed:.2f} (level: {speed_level})", end=" ")
+                    pygame.display.set_caption(f"[{'alive' if alive else 'dead'}] steer:{steer:.2f}, speed:{speed:.2f} (level: {speed_level})")
+
+                    screen.fill((0,0,0))
+
+                    text = font.render(f"Level: {speed_level}", True, (255,255,255))
+                    screen.blit(text, [20, 100])
+
+                    if alive:
+                        pygame.draw.circle(screen, (0,255,0), (200, 200), 50)
+                    else:
+                        pygame.draw.circle(screen, (255,0,0), (200, 200), 50)
+
+                    pygame.display.update()
+
+                @throttle(0.5, "update_serial")
+                def update_serial():
+                    if args.serial:
+                        if alive:
+                            ser.write(b"r")
+                            #ser.flush()
+                        else:
+                            ser.write(b"s")
+                            #ser.flush()
+
+                update_caption()
+                update_serial()
+
+                sleep(0.01)
+
+        except KeyboardInterrupt:
+            print()
+            print("Exiting...")
+            vtx.close()
+            j.quit()
+            print("Exited...")
+            exit(0)
+        except:
+            #raise # for debug
+            sleep(1)
+            print()
+            print("Connection closed. Reconecting...")
+            continue
+
+
+if __name__ == '__main__':
+    main()
+
