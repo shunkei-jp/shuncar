@@ -8,6 +8,8 @@ import serial.tools.list_ports
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 
+from gamepad import GamePad
+
 from shunkei_sdk import ShunkeiVTX
 
 DEFAULT_PORT = 12334
@@ -161,11 +163,11 @@ def main():
     if args.serial:
         ser = serial_auto_connect()
 
-    j = pygame.joystick.Joystick(0)
-    j.init()
-    print(f"Joystick: {j.get_name()}")
+    gp = GamePad()
+    print(f"Joystick: {gp.name}")
 
     # exponential backoff
+    vtx: ShunkeiVTX | None = None
     while True:
         sleep(1)
         try:
@@ -248,17 +250,11 @@ def main():
                     elif event.type == pygame.QUIT:
                         raise KeyboardInterrupt()
                 events = pygame.event.pump()
-                if args.algo==0:
-                    steer, speed = con2duty_simple(j, speed_level)
-                elif args.algo==1:
-                    steer, speed = con2duty_speedLimit(j, speed_level) 
-                elif args.algo==2:
-                    steer, speed = con2duty_wheel(j, speed_level)
-                elif args.algo==3:
-                    steer, speed = con2duty_wheel_ffb(j, speed_level)
-                else:
-                    print("invalid algo number")
-                    exit(1)
+
+                y, x = gp.get_values()
+                steer = center_steer + (15*x) + steer_trim
+                speed = 90 + (15*y) * speed_level / 10
+
                 vtx.write(f"{int(steer)} {int(speed)} \n".encode())
 
                 @throttle(0.1, "update_caption")
@@ -297,7 +293,7 @@ def main():
             print()
             print("Exiting...")
             vtx.close()
-            j.quit()
+            gp.close()
             print("Exited...")
             exit(0)
         except:
