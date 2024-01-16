@@ -31,108 +31,6 @@ def throttle(interval, key):
         return wrapper
     return decorator
 
-def con2duty_simple(j, limit):
-    global steer_trim
-    x = j.get_axis(0)
-    if abs(x) < 0.1:
-        x = 0
-    y = j.get_axis(3)
-    if abs(y) < 0.1:
-        y = 0
-
-    steer = center_steer + (15*x) + steer_trim
-    speed = 90 + (15*y) * limit / 10
-
-    # if j.get_button(4):
-    #     steer_trim -= 0.1
-    # elif j.get_button(5):
-    #     steer_trim += 0.1
-
-    #print(f"steer:{steer}, speed:{speed}")
-    return steer, speed
-
-def con2duty_speedLimit(j, limit):
-    if limit > 10:
-        limit = 10
-
-    x = j.get_axis(0)
-    if abs(x) < 0.1:
-        x = 0
-    steer = center_steer + (15*x)
-
-    accel = j.get_button(3)
-    brake = j.get_button(2)
-    speed = 90
-    if brake:
-        speed = 90 + (15) * limit / 10
-    elif accel:
-        speed = 90 - (15) * limit / 10
-
-    #print(f"steer:{steer}, speed:{speed}")
-    return steer, speed
-
-def con2duty_wheel(j, limit):
-    global steer_trim
-
-    x = j.get_axis(0)
-    # if abs(x) < 0.1:
-    #     x = 0
-
-    accel = (j.get_axis(5) + 1) / 2
-    brake = (j.get_axis(4) + 1) / 2
-    y = -(accel - brake)
-    if abs(y) < 0.1:
-        y = 0
-
-    if y > 0:
-        # if back
-        y = y * limit * 0.5
-    
-    steer = center_steer+ (15*x) + steer_trim
-    speed = 90+ (15*y) * limit / 10
-
-    # if j.get_button(9):
-    #     steer_trim -= 0.1
-    # elif j.get_button(10):
-    #     steer_trim += 0.1
-
-    #print(f"steer:{steer}, speed:{speed}")
-    return steer, speed
-
-def con2duty_wheel_ffb(j, limit):
-    global steer_trim
-
-    x = j.get_axis(0)
-    # if abs(x) < 0.1:
-    #     x = 0
-    x *= 5
-    if x > 1:
-        x = 1
-    if x < -1:
-        x = -1
-
-    accel = (j.get_axis(3) + 1) / 2
-    brake = (j.get_axis(2) + 1) / 2
-    y = -(accel - brake)
-    if abs(y) < 0.1:
-        y = 0
-
-    if y > 0:
-        # if back
-        y = y * limit * 0.5
-    
-    steer = center_steer+ (15*x) + steer_trim
-    speed = 90+ (15*y) * limit / 10
-
-    # if j.get_button(9):
-    #     steer_trim -= 0.1
-    # elif j.get_button(10):
-    #     steer_trim += 0.1
-
-    #print(f"steer:{steer}, speed:{speed}")
-    return steer, speed
-
-
 def serial_auto_connect() -> serial.Serial:
     ports = list(serial.tools.list_ports.comports())
     for p in ports:
@@ -145,7 +43,6 @@ def serial_auto_connect() -> serial.Serial:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", help="host name")
-    parser.add_argument("-a", "--algo", type=int, default=0, help="algo number")
     parser.add_argument("-s", "--speed", type=int, default=5, help="max speed adjustment")
     parser.add_argument("-w", "--webrtc", action="store_true", help="use webrtc")
     parser.add_argument("--room-id", help="room id")
