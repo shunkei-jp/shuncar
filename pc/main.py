@@ -292,7 +292,8 @@ def main():
         except KeyboardInterrupt:
             print()
             print("Exiting...")
-            vtx.close()
+            if vtx is not None:
+                vtx.close()
             gp.close()
             print("Exited...")
             exit(0)
