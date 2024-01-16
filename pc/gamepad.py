@@ -6,7 +6,8 @@ import pygame
 
 # https://www.amazon.co.jp/dp/B01N1S3YJP/
 CONTROLLER_JC_U4013S = "SHANWAN JC-U4013S DirectInput Mode"
-CONTROLLERS = [CONTROLLER_JC_U4013S]
+CONTROLLER_HORI_RACING_WHEEL_APEX = "HORI Racing Wheel Apex"
+CONTROLLERS = [CONTROLLER_JC_U4013S, CONTROLLER_HORI_RACING_WHEEL_APEX]
 
 class GamePad:
     name: str
@@ -44,7 +45,16 @@ class GamePad:
             if abs(y) < 0.1:
                 y = 0
             return y, x
+        if self.name == CONTROLLER_HORI_RACING_WHEEL_APEX:
+            x = self.j.get_axis(0)
 
+            accel = (self.j.get_axis(5) + 1) / 2
+            brake = (self.j.get_axis(4) + 1) / 2
+            y = -(accel - brake)
+            if abs(y) < 0.1:
+                y = 0
+
+            return y, x
 
         raise ValueError("Unsupported controller")
 
