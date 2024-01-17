@@ -2,7 +2,8 @@
 
 ShunCarは、 [低遅延映像伝送システム Shunkei VTX](https://www.shunkei.jp/product/) を活用した遠隔操縦の評価のためのラジコンです。
 
-タミヤ製のラジコン TT-02 をベースにデジタル操縦仕様に改造したものであり、Shunkei VTX以外のシステムでも操縦が可能です。
+タミヤ製のラジコン TT-02 をベースにデジタル操縦仕様に改造したものであり、
+Shunkei VTX以外でも、UART信号を出力できるシステムを構築すれば操縦が可能です。
 
 ![](doc/img/shuncar.jpeg)
 
