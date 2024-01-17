@@ -104,11 +104,11 @@
         },
         "shunkei-sdk": {
             "hashes": [
-                "sha256:4ac19cf8884890c4ffc68e5c1bf99b2748529c1b0f8607bb4b6dad46d849f5a5",
-                "sha256:8a00e7310c4431b91c20485e8b09aa37afd8c9a383167a0ef775b94cb9302ca9"
+                "sha256:6cc996d359a000ebb570bfcf41c24ca7f0b4d3b086172082713fe6e9858a070b",
+                "sha256:8e67440f5f911b883419ca796ce1699f059368f859765073ba96642ebdca1bd7"
             ],
             "index": "pypi",
-            "version": "==0.0.1.post1"
+            "version": "==0.1.0"
         },
         "zeroconf": {
             "hashes": [

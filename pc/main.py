@@ -90,7 +90,7 @@ def main():
 
             print("Waiting for input...")
             while True:
-                buf = vtx.read(1024)
+                buf = vtx.uart_read(1024)
                 if buf is not None:
                     lines = buf.decode().split("\n")
                     for line in lines:
@@ -152,7 +152,7 @@ def main():
                 steer = center_steer + (15*x) + steer_trim
                 speed = 90 + (15*y) * speed_level / 10
 
-                vtx.write(f"{int(steer)} {int(speed)} \n".encode())
+                vtx.uart_write(f"{int(steer)} {int(speed)} \n".encode())
 
                 @throttle(0.1, "update_caption")
                 def update_caption():
