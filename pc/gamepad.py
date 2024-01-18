@@ -38,8 +38,8 @@ class GamePad:
         pygame.event.pump()
 
         if self.name == CONTROLLER_JC_U4013S:
-            x = self.j.get_axis(0)
-            y = self.j.get_axis(3) 
+            x = self.j.get_axis(1)
+            y = self.j.get_axis(2)
             if abs(x) < 0.1:
                 x = 0
             if abs(y) < 0.1:
