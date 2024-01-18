@@ -51,6 +51,7 @@ def main():
 
     speed_level = args.speed
     alive = False
+    batt_voltage = 0
 
     pygame.init()
     pygame.font.init()
@@ -99,6 +100,9 @@ def main():
                             continue
                         if line == "k":
                             last_keep_alive = time()
+                        else:
+                            if line.startswith("batt:"):
+                                batt_voltage = float(line.split(":")[1])
 
                 if time() - last_keep_alive > 0.1:
                     alive = False
@@ -156,8 +160,8 @@ def main():
 
                 @throttle(0.1, "update_caption")
                 def update_caption():
-                    print(f"\r[{'alive' if alive else 'dead'}] steer:{steer:.2f}, speed:{speed:.2f} (level: {speed_level})", end=" ")
-                    pygame.display.set_caption(f"[{'alive' if alive else 'dead'}] steer:{steer:.2f}, speed:{speed:.2f} (level: {speed_level})")
+                    print(f"\r[{'alive' if alive else 'dead'} {batt_voltage:.1f}V] steer:{steer:.2f}, speed:{speed:.2f} (level: {speed_level})", end=" ")
+                    pygame.display.set_caption(f"[{'alive' if alive else 'dead'} {batt_voltage:.1f}V] steer:{steer:.2f}, speed:{speed:.2f} (level: {speed_level})")
 
                     screen.fill((0,0,0))
 
