@@ -6,6 +6,7 @@ import serial
 import serial.tools.list_ports
 
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+environ['SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS'] = '1'
 import pygame
 
 from gamepad import GamePad
