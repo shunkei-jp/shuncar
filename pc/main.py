@@ -48,11 +48,14 @@ def main():
     parser.add_argument("-w", "--webrtc", action="store_true", help="use webrtc")
     parser.add_argument("--room-id", help="room id")
     parser.add_argument("--serial", action="store_true", help="use serial")
+    parser.add_argument("--voltage", type=float, default=6.0, help="battery voltage lower limit")
     args = parser.parse_args()
 
     speed_level = args.speed
     alive = False
     batt_voltage = 0
+    batt_voltage_below_cnt = 0
+    batt_alarm = False
 
     pygame.init()
     pygame.font.init()
@@ -158,10 +161,32 @@ def main():
                 steer = center_steer + (15*x) + steer_trim
                 speed = 90 + (15*y) * speed_level / 10
 
-                vtx.uart_write(f"{int(steer)} {int(speed)} \n".encode())
+                if not batt_alarm:
+                    vtx.uart_write(f"{int(steer)} {int(speed)} \n".encode())
+
+                # check battery voltage. if it is too low, stop the car.
+                # battery may be lower than the limit when the car is running, so we need to check it for a while.
+                if batt_voltage < args.voltage:
+                    batt_voltage_below_cnt += 1
+                    if batt_voltage_below_cnt > 10:
+                        # TODO: shutdown the car
+                        batt_alarm = True
+                else:
+                    batt_voltage_below_cnt = 0
+                    batt_alarm = False
 
                 @throttle(0.1, "update_caption")
                 def update_caption():
+                    if batt_alarm:
+                        screen.fill((255,0,0))
+                        text = font.render(f"Battery too low!", True, (255,255,255))
+                        screen.blit(text, [20, 100])
+
+                        text = font_small.render(f"Please charge the battery.", True, (255,255,255))
+                        screen.blit(text, [20, 150])
+                        pygame.display.update()
+                        return
+
                     print(f"\r[{'alive' if alive else 'dead'} {batt_voltage:.1f}V] steer:{steer:.2f}, speed:{speed:.2f} (level: {speed_level})", end=" ")
                     pygame.display.set_caption(f"[{'alive' if alive else 'dead'} {batt_voltage:.1f}V] steer:{steer:.2f}, speed:{speed:.2f} (level: {speed_level})")
 
