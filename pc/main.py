@@ -57,6 +57,7 @@ def main():
     pygame.init()
     pygame.font.init()
     font = pygame.font.SysFont("Grobold", 40)
+    font_small = pygame.font.SysFont("Grobold", 30)
     screen = pygame.display.set_mode((400, 300)) 
 
     if args.serial:
@@ -166,13 +167,34 @@ def main():
 
                     screen.fill((0,0,0))
 
-                    text = font.render(f"Level: {speed_level}", True, (255,255,255))
-                    screen.blit(text, [20, 100])
+                    # horizontal axis
+                    pygame.draw.rect(screen, (255,255,255), pygame.Rect(20, 180, 300, 30), width=2)
+                    pygame.draw.line(screen, (255,255,255), (20 + 150 + 150 * x, 180), (20 + 150 + 150 * x, 208), width=2)
 
+                    # vertical axis
+                    pygame.draw.rect(screen, (255,255,255), pygame.Rect(340, 30, 30, 180), width=2)
+                    pygame.draw.line(screen, (255,255,255), (340, 30 + 90 + 90 * y), (368, 30 + 90 + 90 * y), width=2)
+
+                    # battery
+                    text = font_small.render(f"Battery", True, (255,255,255))
+                    screen.blit(text, [20, 220])
+
+                    text = font.render(f"{batt_voltage:.2f} V", True, (255,255,255))
+                    screen.blit(text, [20, 250])
+
+                    # alive
                     if alive:
-                        pygame.draw.circle(screen, (0,255,0), (200, 200), 50)
+                        pygame.draw.circle(screen, (0,255,0), (280, 45), 30)
                     else:
-                        pygame.draw.circle(screen, (255,0,0), (200, 200), 50)
+                        pygame.draw.circle(screen, (255,0,0), (280, 45), 30)
+
+                    text = font_small.render(f"VTX: {vtx.host}", True, (255,255,255))
+                    screen.blit(text, [20, 20])
+
+                    # speed level
+                    text = font_small.render(f"Speed: Lv.{speed_level}", True, (255,255,255))
+                    screen.blit(text, [20, 50])
+
 
                     pygame.display.update()
 
