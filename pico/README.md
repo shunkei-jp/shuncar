@@ -4,10 +4,11 @@ ShunCarに搭載されている制御基板には、 [Raspberry Pi Pico](https:/
 
 ## ファームウェアの書き換え
 
-1. バイナリの用意: [GitHub Releases](https://github.com/shunkei-jp/shuncar/releases) からダウンロードするか、ソースコードからビルドしてください。
+1. バイナリの用意: [GitHub Releases](https://github.com/shunkei-jp/shuncar/releases) からダウンロードするか、ソースコードからビルドして、`.uf2`ファイルを準備してください。
 2. Rasperry Pi Picoの接続: Rasperry Pi Picoの "BOOT" ボタンを押しながら、USBケーブルでPCと接続を行います。
     PCからは、USBストレージデバイスとして認識されます。
 3. バイナリのコピー: 認識されたUSBストレージデバイスに `.uf2` ファイルをコピーすると、ファームウェアが書き込まれます。
+4. ファイルをコピーすると、自動でエクスプローラ、もしくはFinderが閉じます。自動で閉じた場合更新完了です。
 
 ## ビルド
 
