@@ -107,7 +107,10 @@ def main():
                             last_keep_alive = time()
                         else:
                             if line.startswith("batt:"):
-                                batt_voltage = float(line.split(":")[1])
+                                try:
+                                    batt_voltage = float(line.split(":")[1])
+                                except ValueError:
+                                    pass
 
                 if time() - last_keep_alive > 0.1:
                     alive = False
