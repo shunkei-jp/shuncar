@@ -5,7 +5,7 @@
 #include "pico/stdlib.h"
 #include <stdio.h>
 
-#define STEER_IDLE 95
+#define STEER_IDLE 90
 #define THROTTLE_IDLE 90
 
 #define BRAKE_PWM 105
