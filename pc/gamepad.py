@@ -1,17 +1,23 @@
 import os
+import re
 from typing import Tuple
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 
 # https://www.amazon.co.jp/dp/B01N1S3YJP/
-CONTROLLER_JC_U4013S = "SHANWAN JC-U4013S DirectInput Mode"
 CONTROLLER_HORI_RACING_WHEEL_APEX = "HORI Racing Wheel Apex"
-CONTROLLERS = [CONTROLLER_JC_U4013S, CONTROLLER_HORI_RACING_WHEEL_APEX]
+CONTROLLER_JC_U4013S = "JC-U4013S"
+
+CONTROLLERS = {
+    CONTROLLER_JC_U4013S: "JC-U4013S DirectInput Mode$",
+    CONTROLLER_HORI_RACING_WHEEL_APEX: "^HORI Racing Wheel Apex$",
+}
 
 class GamePad:
     name: str
     j: pygame.joystick.Joystick
+    controller_index: int
 
     def __init__(self):
         pygame.init()
@@ -25,9 +31,11 @@ class GamePad:
             name = j.get_name()
 
             # check if supported
-            if name in CONTROLLERS:
-                self.j = j
-                self.name = name
+            for idx, pattern in CONTROLLERS.items():
+                if re.search(pattern, name):
+                    self.j = j
+                    self.name = name
+                    self.controller_index = idx
 
         if not hasattr(self, 'name'):
             raise ValueError("Unsupported controller")
@@ -42,7 +50,7 @@ class GamePad:
 
         pygame.event.pump()
 
-        if self.name == CONTROLLER_JC_U4013S:
+        if self.controller_index == CONTROLLER_JC_U4013S:
             x = self.j.get_axis(0)
             y = self.j.get_axis(3) 
             if abs(x) < 0.1:
@@ -50,7 +58,7 @@ class GamePad:
             if abs(y) < 0.1:
                 y = 0
             return y, x
-        if self.name == CONTROLLER_HORI_RACING_WHEEL_APEX:
+        if self.controller_index == CONTROLLER_HORI_RACING_WHEEL_APEX:
             x = self.j.get_axis(0)
 
             accel = (self.j.get_axis(5) + 1) / 2
