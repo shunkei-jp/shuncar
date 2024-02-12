@@ -18,13 +18,18 @@ class GamePad:
         pygame.joystick.init()
         if pygame.joystick.get_count() == 0:
             raise ValueError("No joystick detected")
-        j = pygame.joystick.Joystick(0)
-        j.init()
-        self.j = j
-        self.name = j.get_name()
 
-        # check if supported
-        if self.name not in CONTROLLERS:
+        for i in range(pygame.joystick.get_count()):
+            j = pygame.joystick.Joystick(i)
+            j.init()
+            name = j.get_name()
+
+            # check if supported
+            if name in CONTROLLERS:
+                self.j = j
+                self.name = name
+
+        if not hasattr(self, 'name'):
             raise ValueError("Unsupported controller")
 
     def close(self):
