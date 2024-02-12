@@ -112,7 +112,7 @@ def main():
                                 except ValueError:
                                     pass
 
-                if time() - last_keep_alive > 0.1:
+                if time() - last_keep_alive > 1:
                     alive = False
                 else:
                     alive = True
