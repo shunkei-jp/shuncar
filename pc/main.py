@@ -210,6 +210,13 @@ def main():
                     text = font.render(f"{batt_voltage:.2f} V", True, (255,255,255))
                     screen.blit(text, [20, 250])
 
+                    # RTT
+                    rtt_us = vtx.control_rtt_us
+                    if rtt_us is not None:
+                        rtt = rtt_us / 1000.0
+                        text = font_small.render(f"RTT: {rtt:.2f} ms", True, (255,255,255))
+                        screen.blit(text, [20, 100])
+
                     # alive
                     if alive:
                         pygame.draw.circle(screen, (0,255,0), (280, 45), 30)
