@@ -15,7 +15,7 @@ from shunkei_sdk import ShunkeiVTX
 
 DEFAULT_PORT = 12334
 
-center_steer = 93.3
+center_steer = 90
 steer_trim = 0
 
 last_called_dict = {}
