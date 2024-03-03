@@ -9,9 +9,11 @@ environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 environ['SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS'] = '1'
 import pygame
 
-from gamepad import GamePad
-
 from shunkei_sdk import ShunkeiVTX
+
+# local import
+from gamepad import GamePad
+from ui import State, UI
 
 DEFAULT_PORT = 12334
 
@@ -51,23 +53,23 @@ def main():
     parser.add_argument("--voltage", type=float, default=6.0, help="battery voltage lower limit")
     args = parser.parse_args()
 
-    speed_level = args.speed
-    alive = False
-    batt_voltage = 0
-    batt_voltage_below_cnt = 0
-    batt_alarm = False
-
     pygame.init()
     pygame.font.init()
-    font = pygame.font.SysFont("Grobold", 40)
-    font_small = pygame.font.SysFont("Grobold", 30)
-    screen = pygame.display.set_mode((400, 300)) 
 
     if args.serial:
         ser = serial_auto_connect()
 
     gp = GamePad()
     print(f"Joystick: {gp.name}")
+
+    state = State()
+    ui = UI(state)
+
+    state.speed_level = args.speed
+    alive = False
+    batt_voltage = 0
+    batt_voltage_below_cnt = 0
+    batt_alarm = False
 
     # exponential backoff
     vtx: ShunkeiVTX | None = None
@@ -109,6 +111,7 @@ def main():
                             if line.startswith("batt:"):
                                 try:
                                     batt_voltage = float(line.split(":")[1])
+                                    state.batt_voltage = batt_voltage
                                 except ValueError:
                                     pass
 
@@ -116,13 +119,14 @@ def main():
                     alive = False
                 else:
                     alive = True
+                state.alive = alive
 
                 if args.serial:
                     if ser.in_waiting > 0:
                         buf = ser.readline().decode('utf-8').strip()
                         try:
                             val = int(buf)
-                            speed_level = val
+                            state.speed_level = val
                         except ValueError:
                             pass
 
@@ -131,38 +135,42 @@ def main():
                     # keyboard
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_UP:
-                            if speed_level < 10:
-                                speed_level += 1
+                            if state.speed_level < 10:
+                                state.speed_level += 1
                         elif event.key == pygame.K_DOWN:
-                            if speed_level > 1:
-                                speed_level -= 1
+                            if state.speed_level > 1:
+                                state.speed_level -= 1
                         elif event.key == pygame.K_1:
-                            speed_level = 1
+                            state.speed_level = 1
                         elif event.key == pygame.K_2:
-                            speed_level = 2
+                            state.speed_level = 2
                         elif event.key == pygame.K_3:
-                            speed_level = 3
+                            state.speed_level = 3
                         elif event.key == pygame.K_4:
-                            speed_level = 4
+                            state.speed_level = 4
                         elif event.key == pygame.K_5:
-                            speed_level = 5
+                            state.speed_level = 5
                         elif event.key == pygame.K_6:
-                            speed_level = 6
+                            state.speed_level = 6
                         elif event.key == pygame.K_7:
-                            speed_level = 7
+                            state.speed_level = 7
                         elif event.key == pygame.K_8:
-                            speed_level = 8
+                            state.speed_level = 8
                         elif event.key == pygame.K_9:
-                            speed_level = 9
+                            state.speed_level = 9
                         elif event.key == pygame.K_0:
-                            speed_level = 10
+                            state.speed_level = 10
                     elif event.type == pygame.QUIT:
                         raise KeyboardInterrupt()
                 events = pygame.event.pump()
 
                 y, x = gp.get_values()
                 steer = center_steer + (15*x) + steer_trim
-                speed = 90 + (15*y) * speed_level / 10
+                speed = 90 + (15*y) * state.speed_level / 10
+
+                # update state
+                state.steering = x
+                state.throttle = y
 
                 if not batt_alarm:
                     vtx.uart_write(f"{int(steer)} {int(speed)} \n".encode())
@@ -174,64 +182,14 @@ def main():
                     if batt_voltage_below_cnt > 10:
                         # TODO: shutdown the car
                         batt_alarm = True
+                        state.batt_alarm = True
                 else:
                     batt_voltage_below_cnt = 0
                     batt_alarm = False
+                    state.batt_alarm = False
 
-                @throttle(0.1, "update_caption")
-                def update_caption():
-                    if batt_alarm:
-                        screen.fill((255,0,0))
-                        text = font.render(f"Battery too low!", True, (255,255,255))
-                        screen.blit(text, [20, 100])
-
-                        text = font_small.render(f"Please charge the battery.", True, (255,255,255))
-                        screen.blit(text, [20, 150])
-                        pygame.display.update()
-                        return
-
-                    print(f"\r[{'alive' if alive else 'dead'} {batt_voltage:.1f}V] steer:{steer:.2f}, speed:{speed:.2f} (level: {speed_level})", end=" ")
-                    pygame.display.set_caption(f"[{'alive' if alive else 'dead'} {batt_voltage:.1f}V] steer:{steer:.2f}, speed:{speed:.2f} (level: {speed_level})")
-
-                    screen.fill((0,0,0))
-
-                    # horizontal axis
-                    pygame.draw.rect(screen, (255,255,255), pygame.Rect(20, 180, 300, 30), width=2)
-                    pygame.draw.line(screen, (255,255,255), (20 + 150 + 150 * x, 180), (20 + 150 + 150 * x, 208), width=2)
-
-                    # vertical axis
-                    pygame.draw.rect(screen, (255,255,255), pygame.Rect(340, 30, 30, 180), width=2)
-                    pygame.draw.line(screen, (255,255,255), (340, 30 + 90 + 90 * y), (368, 30 + 90 + 90 * y), width=2)
-
-                    # battery
-                    text = font_small.render(f"Battery", True, (255,255,255))
-                    screen.blit(text, [20, 220])
-
-                    text = font.render(f"{batt_voltage:.2f} V", True, (255,255,255))
-                    screen.blit(text, [20, 250])
-
-                    # RTT
-                    rtt_us = vtx.control_rtt_us
-                    if rtt_us is not None:
-                        rtt = rtt_us / 1000.0
-                        text = font_small.render(f"RTT: {rtt:.2f} ms", True, (255,255,255))
-                        screen.blit(text, [20, 100])
-
-                    # alive
-                    if alive:
-                        pygame.draw.circle(screen, (0,255,0), (280, 45), 30)
-                    else:
-                        pygame.draw.circle(screen, (255,0,0), (280, 45), 30)
-
-                    text = font_small.render(f"VTX: {vtx.host}", True, (255,255,255))
-                    screen.blit(text, [20, 20])
-
-                    # speed level
-                    text = font_small.render(f"Speed: Lv.{speed_level}", True, (255,255,255))
-                    screen.blit(text, [20, 50])
-
-
-                    pygame.display.update()
+                state.control_rtt_us = vtx.control_rtt_us
+                state.target_ip = vtx.host
 
                 @throttle(0.5, "update_serial")
                 def update_serial():
@@ -243,7 +201,6 @@ def main():
                             ser.write(b"s")
                             #ser.flush()
 
-                update_caption()
                 update_serial()
 
                 sleep(0.01)
