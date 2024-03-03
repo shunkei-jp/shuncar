@@ -36,7 +36,6 @@ def main():
     ui = UI(state)
 
     state.speed_level = args.speed
-    alive = False
     batt_voltage = 0
     batt_voltage_below_cnt = 0
     batt_alarm = False
@@ -44,7 +43,6 @@ def main():
     # exponential backoff
     vtx: ShunkeiVTX | None = None
     while True:
-        sleep(1)
         try:
             # set up host and port
             if args.webrtc:
@@ -66,8 +64,12 @@ def main():
 
             last_keep_alive = 0
 
-            print("Waiting for input...")
+            print("Connected to Shunkei VTX")
+            # main loop
             while True:
+                # ------------------------------
+                # handler Car events
+                # ------------------------------
                 buf = vtx.uart_read(1024)
                 if buf is not None:
                     lines = buf.decode().split("\n")
@@ -80,17 +82,19 @@ def main():
                         else:
                             if line.startswith("batt:"):
                                 try:
-                                    batt_voltage = float(line.split(":")[1])
-                                    state.batt_voltage = batt_voltage
+                                    state.batt_voltage = float(line.split(":")[1])
                                 except ValueError:
                                     pass
 
+                # update alive flag
                 if time() - last_keep_alive > 1:
-                    alive = False
+                    state.alive = False
                 else:
-                    alive = True
-                state.alive = alive
+                    state.alive = True
 
+                # ------------------------------
+                # handler UI events
+                # ------------------------------
                 events = pygame.event.get()
                 for event in events:
                     # keyboard
@@ -125,20 +129,22 @@ def main():
                         raise KeyboardInterrupt()
                 events = pygame.event.pump()
 
+                # ------------------------------
+                # gamepad handling
+                # ------------------------------
                 y, x = gp.get_values()
-                steer = center_steer + (15*x) + steer_trim
-                speed = 90 + (15*y) * state.speed_level / 10
-
                 # update state
                 state.steering = x
                 state.throttle = y
-
+                # send to the car
+                steer = center_steer + (15*x) + steer_trim
+                speed = 90 + (15*y) * state.speed_level / 10
                 if not batt_alarm:
                     vtx.uart_write(f"{int(steer)} {int(speed)} \n".encode())
 
                 # check battery voltage. if it is too low, stop the car.
                 # battery may be lower than the limit when the car is running, so we need to check it for a while.
-                if batt_voltage < args.voltage:
+                if state.batt_voltage < args.voltage:
                     batt_voltage_below_cnt += 1
                     if batt_voltage_below_cnt > 10:
                         # TODO: shutdown the car
@@ -155,7 +161,6 @@ def main():
                 sleep(0.01)
 
         except KeyboardInterrupt:
-            print()
             print("Exiting...")
             if vtx is not None:
                 vtx.close()
@@ -165,7 +170,10 @@ def main():
         except:
             #raise # for debug
             sleep(1)
-            print()
+            try:
+                state.alive = False
+            except:
+                pass
             print("Connection closed. Reconecting...")
             continue
 

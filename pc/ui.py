@@ -9,7 +9,7 @@ import pygame
 class State:
     self_ip: str | None = None
     target_ip: str | None = None
-    batt_voltage: float | None = None
+    batt_voltage: float = 0.0
 
     alive: bool = False
     batt_alarm: bool = False
