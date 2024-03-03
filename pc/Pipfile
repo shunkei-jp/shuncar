@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 pygame = "*"
 zeroconf = "*"
-pyserial = "*"
 shunkei-sdk = "*"
 
 [dev-packages]

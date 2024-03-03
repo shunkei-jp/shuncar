@@ -2,9 +2,6 @@ from os import environ
 from time import sleep, time
 import argparse
 
-import serial
-import serial.tools.list_ports
-
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 environ['SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS'] = '1'
 import pygame
@@ -20,44 +17,17 @@ DEFAULT_PORT = 12334
 center_steer = 90
 steer_trim = 0
 
-last_called_dict = {}
-def throttle(interval, key):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            import time
-            global last_called_dict
-            last_called = last_called_dict.get(key, 0)
-            if time.time() - last_called < interval:
-                return
-            last_called_dict[key] = time.time()
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
-
-def serial_auto_connect() -> serial.Serial:
-    ports = list(serial.tools.list_ports.comports())
-    for p in ports:
-        if "Pico" in p.description:
-            print("Connecting to Pico...: ", p.device)
-            return serial.Serial(p.device)
-    else:
-        raise IOError("No Pico found")
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", help="host name")
     parser.add_argument("-s", "--speed", type=int, default=5, help="max speed adjustment")
     parser.add_argument("-w", "--webrtc", action="store_true", help="use webrtc")
     parser.add_argument("--room-id", help="room id")
-    parser.add_argument("--serial", action="store_true", help="use serial")
     parser.add_argument("--voltage", type=float, default=6.0, help="battery voltage lower limit")
     args = parser.parse_args()
 
     pygame.init()
     pygame.font.init()
-
-    if args.serial:
-        ser = serial_auto_connect()
 
     gp = GamePad()
     print(f"Joystick: {gp.name}")
@@ -121,15 +91,6 @@ def main():
                     alive = True
                 state.alive = alive
 
-                if args.serial:
-                    if ser.in_waiting > 0:
-                        buf = ser.readline().decode('utf-8').strip()
-                        try:
-                            val = int(buf)
-                            state.speed_level = val
-                        except ValueError:
-                            pass
-
                 events = pygame.event.get()
                 for event in events:
                     # keyboard
@@ -190,18 +151,6 @@ def main():
 
                 state.control_rtt_us = vtx.control_rtt_us
                 state.target_ip = vtx.host
-
-                @throttle(0.5, "update_serial")
-                def update_serial():
-                    if args.serial:
-                        if alive:
-                            ser.write(b"r")
-                            #ser.flush()
-                        else:
-                            ser.write(b"s")
-                            #ser.flush()
-
-                update_serial()
 
                 sleep(0.01)
 
