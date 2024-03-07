@@ -13,6 +13,7 @@ class State:
 
     alive: bool = False
     batt_alarm: bool = False
+    emergency_stop: bool = False
 
     throttle: float = 0.0
     steering: float = 0.0
@@ -41,6 +42,16 @@ class UI:
             self.screen.blit(text, [20, 100])
 
             text = self.font_small.render(f"Please charge the battery.", True, (255,255,255))
+            self.screen.blit(text, [20, 150])
+            pygame.display.update()
+            return
+
+        if self.state.emergency_stop:
+            self.screen.fill((255,0,0))
+            text = self.font.render(f"Emergency stop!", True, (255,255,255))
+            self.screen.blit(text, [20, 100])
+
+            text = self.font_small.render(f"Press R key to reset.", True, (255,255,255))
             self.screen.blit(text, [20, 150])
             pygame.display.update()
             return

@@ -129,6 +129,10 @@ def main():
                             state.speed_level = 9
                         elif event.key == pygame.K_0:
                             state.speed_level = 10
+                        elif event.key == pygame.K_r:
+                            state.emergency_stop = False
+                        elif event.key == pygame.K_SPACE:
+                            state.emergency_stop = True
                     elif event.type == pygame.QUIT:
                         raise KeyboardInterrupt()
                 events = pygame.event.pump()
@@ -143,7 +147,7 @@ def main():
                 # send to the car
                 steer = center_steer + (15*x) + steer_trim
                 speed = 90 + (15*y) * state.speed_level / 10
-                if not batt_alarm:
+                if not batt_alarm and not state.emergency_stop:
                     vtx.uart_write(f"{int(steer)} {int(speed)} \n".encode())
 
                 # check battery voltage. if it is too low, stop the car.
