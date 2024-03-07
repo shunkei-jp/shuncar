@@ -24,7 +24,7 @@ def main():
     parser.add_argument("-w", "--webrtc", action="store_true", help="use webrtc")
     parser.add_argument("--room-id", help="room id")
     parser.add_argument("--voltage", type=float, default=6.0, help="battery voltage lower limit")
-    parser.add_argument("--g29", action="store_true", help="use G29 controller")
+    parser.add_argument("--g29", action="store_true", help="use G29 controller (experimental)")
     args = parser.parse_args()
 
     pygame.init()
