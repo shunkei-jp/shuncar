@@ -114,7 +114,7 @@ class GamePad:
             self.g29.set_autocenter(strength=0.9, rate=(accel+1)/4 + 0.2)
 
             x = steering
-            y = -(accel - brake)
+            y = -(accel - brake) / 2
             if abs(y) < 0.1:
                 y = 0
 
