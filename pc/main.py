@@ -15,7 +15,6 @@ from ui import State, UI
 DEFAULT_PORT = 12334
 
 center_steer = 90
-steer_trim = 0
 
 def main():
     parser = argparse.ArgumentParser()
@@ -109,6 +108,10 @@ def main():
                         elif event.key == pygame.K_DOWN:
                             if state.speed_level > 1:
                                 state.speed_level -= 1
+                        elif event.key == pygame.K_LEFT:
+                            state.steer_trim -= 1
+                        elif event.key == pygame.K_RIGHT:
+                            state.steer_trim += 1
                         elif event.key == pygame.K_1:
                             state.speed_level = 1
                         elif event.key == pygame.K_2:
@@ -145,7 +148,7 @@ def main():
                 state.steering = x
                 state.throttle = y
                 # send to the car
-                steer = center_steer + (15*x) + steer_trim
+                steer = center_steer + (15*x) + state.steer_trim
                 speed = 90 + (15*y) * state.speed_level / 10
                 if not batt_alarm and not state.emergency_stop:
                     vtx.uart_write(f"{int(steer)} {int(speed)} \n".encode())

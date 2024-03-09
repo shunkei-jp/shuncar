@@ -17,6 +17,7 @@ class State:
 
     throttle: float = 0.0
     steering: float = 0.0
+    steer_trim: float = 0.0
 
     speed_level: int | None = None
 
@@ -114,6 +115,10 @@ class UI:
         # speed level
         text = self.font_small.render(f"Speed: Lv.{self.state.speed_level}", True, (255,255,255))
         self.screen.blit(text, [20, 50])
+
+        # speed level
+        text = self.font_small.render(f"Trim: {self.state.steer_trim}", True, (255,255,255))
+        self.screen.blit(text, [20, 80])
 
         pygame.display.update()
 
