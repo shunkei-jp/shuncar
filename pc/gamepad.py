@@ -58,7 +58,7 @@ class GamePad:
                     self.name = "G29"
                     self.g29 = G29()
                     self.g29.set_range(400)
-                    self.g29.set_autocenter(strength=0.9, rate=0.5)
+                    self.g29.set_autocenter(strength=0.5, rate=0.5)
                     break
                 except Exception as e:
                     print(e)
@@ -109,9 +109,6 @@ class GamePad:
             steering = state["steering"]
             accel = state["accelerator"]
             brake = state["brake"]
-
-            # update autocenter force
-            self.g29.set_autocenter(strength=0.9, rate=(accel+1)/4 + 0.2)
 
             x = steering
             y = -(accel - brake) / 2
