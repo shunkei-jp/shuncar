@@ -149,7 +149,11 @@ def main():
                 state.throttle = y
                 # send to the car
                 steer = center_steer + (15*x) + state.steer_trim
-                speed = 90 + (15*y) * state.speed_level / 10
+                updated_speed = (15 * y) / 10
+                if updated_speed < 0:
+                    speed = 90 + updated_speed * state.speed_level
+                else:
+                    speed = 90 + updated_speed * 5 # back
                 if not batt_alarm and not state.emergency_stop:
                     vtx.uart_write(f"{int(steer)} {int(speed)} \n".encode())
 
