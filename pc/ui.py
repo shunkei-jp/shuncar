@@ -30,7 +30,7 @@ class UI:
 
     def __init__(self, state: State):
         self.state = state
-        self.screen = pygame.display.set_mode((400, 300)) 
+        self.screen = pygame.display.set_mode((400, 300), pygame.RESIZABLE)
         self.font = pygame.font.SysFont("Grobold", 40)
         self.font_small = pygame.font.SysFont("Grobold", 30)
 
