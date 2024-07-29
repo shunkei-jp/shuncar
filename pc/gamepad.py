@@ -6,7 +6,6 @@ from time import sleep
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
-from g29py import G29
 
 # https://www.amazon.co.jp/dp/B01N1S3YJP/
 CONTROLLER_HORI_RACING_WHEEL_APEX = "HORI Racing Wheel Apex"
@@ -22,7 +21,6 @@ class GamePad:
     j: pygame.joystick.Joystick
     controller_index: int
     device: str
-    g29: G29
 
     def __init__(self, device = "PYGAME") -> None:
         """
@@ -55,6 +53,7 @@ class GamePad:
         elif device == "G29":
             for i in range(10):
                 try:
+                    from g29py import G29
                     self.name = "G29"
                     self.g29 = G29()
                     self.g29.set_range(400)
