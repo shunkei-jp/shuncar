@@ -16,7 +16,12 @@
    - ```sh
      pip install pipenv
      ```
-3. 依存ライブラリのインストール
+3. hidapiのインストール (mac / linuxの場合)
+   - ```sh
+     brew install hidapi # mac
+     sudo apt install libhidapi-dev # Debian系
+     ```
+5. 依存ライブラリのインストール
    - `pc` ディレクトリに移動し、Pipenvを用いて依存ライブラリのインストールを行います。
      ```sh
      python -m pipenv sync
