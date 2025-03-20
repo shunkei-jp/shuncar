@@ -8,6 +8,10 @@
 - SHANWAN JC-U4013S DirectInput Mode ([amazon](https://www.amazon.co.jp/dp/B01N1S3YJP/))
 - HORI Racing Wheel Apex ([amazon](https://www.amazon.co.jp/dp/B09P9S5JJ1/))
 
+以下のキーボードに関しては、特殊な操作を行う必要があります。
+
+- Logicool G G29 Driving Force ([amazon](https://www.amazon.co.jp/dp/B00ZQNBTJW/))
+
 ## 環境構築
 
 1. Pythonのインストール
@@ -43,6 +47,25 @@ python -m pipenv run python main.py
 
 ```sh
 python -m pipenv run python main.py --host <ip_addr>
+```
+
+## G29で運用する場合
+
+### 準備
+
+G29での動作には依存パッケージのインストールが必要になります。
+
+```sh
+sudo apt install libhidapi-dev # for linux (Debian系)
+brew install hidapi # for mac
+```
+
+### 起動方法
+
+G29は自動認識ができないため、ソフトウェア起動時に `--g29` オプションをつけて起動してください。
+
+```sh
+python -m pipenv run python main.py --g29
 ```
 
 ## ToDO
