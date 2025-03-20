@@ -153,7 +153,7 @@ def main():
                 if updated_speed < 0:
                     speed = 90 + updated_speed * state.speed_level
                 else:
-                    speed = 90 + updated_speed * 5 # back
+                    speed = 90 + min(updated_speed * 20, 5) # back
                 if not batt_alarm and not state.emergency_stop:
                     vtx.uart_write(f"{int(steer)} {int(speed)} \n".encode())
 
