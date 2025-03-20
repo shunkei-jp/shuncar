@@ -9,6 +9,13 @@ Shunkei VTX以外でも、UART信号を出力できるシステムを構築す�
 
 ※ 画像は開発中のバージョンです。
 
+## 使い方
+
+- [ShunCar利用方法(ShunCarを利用するためのマニュアル)](doc/operation.md)
+- [ShunCar操縦プログラムの立ち上げ](pc/README.md)
+
+ご不明点や疑問点、バグ報告などは、[Shunkei Github discussions](https://github.com/orgs/shunkei-jp/discussions) へご投稿ください。
+
 ## 構成
 
 ![](doc/img/shuncar-structure.png)
