@@ -102,7 +102,7 @@ brew install hidapi # for mac
 G29は自動認識ができないため、ソフトウェア起動時に `--g29` オプションをつけて起動してください。
 
 ```sh
-python -m pipenv run python main.py --g29
+uv run python main.py --g29
 ```
 
 ## ToDO
