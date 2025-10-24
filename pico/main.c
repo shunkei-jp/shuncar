@@ -5,6 +5,9 @@
 #include "pico/stdlib.h"
 #include <stdio.h>
 
+// #define XBEE_ENABLE
+#define VER2
+
 #define STEER_IDLE 90
 #define THROTTLE_IDLE 90
 
@@ -21,7 +24,7 @@
 #define BATT_ADC_PIN 28
 #define BATT_ADC_ADC 2
 
-// #define XBEE_ENABLE
+
 
 #ifdef XBEE_ENABLE
 #define XBEE_UART uart0
@@ -30,8 +33,14 @@
 #endif
 
 #define CTRL_UART uart0
+
+#ifdef VER2
+#define CTRL_UART_TX_PIN 1
+#define CTRL_UART_RX_PIN 0
+#else
 #define CTRL_UART_TX_PIN 0
 #define CTRL_UART_RX_PIN 1
+#endif
 
 #define NOEMERG_JUMPER_PIN 14
 
