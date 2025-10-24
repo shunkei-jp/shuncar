@@ -12,30 +12,67 @@
 
 - Logicool G G29 Driving Force ([amazon](https://www.amazon.co.jp/dp/B00ZQNBTJW/))
 
-## 環境構築
+### 環境構築（UV対応）
 
-1. Pythonのインストール
-   - Python3.11, 3.12 で動作確認がとれています。
-2. Pipenvのインストール
-   - ```sh
-     pip install pipenv
-     ```
-3. hidapiのインストール (mac / linuxの場合)
-   - ```sh
-     brew install hidapi # mac
-     sudo apt install libhidapi-dev # Debian系
-     ```
-5. 依存ライブラリのインストール
-   - `pc` ディレクトリに移動し、Pipenvを用いて依存ライブラリのインストールを行います。
-     ```sh
-     python -m pipenv sync
+1. Pythonのバージョン管理ツールである[UV](https://github.com/astral-sh/uv)をインストールします。
+
+   MacとLinuxの場合
+
+   ```
+   # On macOS and Linux.
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+
+   Windowsの場合
+
+   ```
+   # On Windows.
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
+
+2. hidapiのインストール (mac / linuxの場合)
+
+   ```
+   brew install hidapi # mac
+   sudo apt install libhidapi-dev # Debian系
+   ```
+
+3. UV環境の同期をします。必要Pythonバージョンがない場合は自動でダウンロードされ依存環境も自動でダウンロードされます。（インターネットが必要です）
+
+   ```
+   PS:> cd pc && uv sync
+   Using CPython 3.12.12
+   Creating virtual environment at: .venv
+   Resolved 12 packages in 0.85ms
+   Installed 11 packages in 80ms
+    + certifi==2025.10.5
+    + charset-normalizer==3.4.4
+    + g29py==0.0.10
+    + hid==1.0.4
+    + idna==3.11
+    + ifaddr==0.2.0
+    + pygame==2.6.1
+    + requests==2.32.5
+    + shunkei-sdk==0.2.1
+    + urllib3==2.5.0
+    + zeroconf==0.119.0
+   ```
+
+   確認のため以下を実行するとPython3.12となっていることがわかります。
+
+   ```
+   PS > uv run python -V
+   Python 3.12.12
+   ```
+
+   UVでは直接Pythonを実行しても仮想環境が使用されないためご注意ください。
 
 ## 実行
 
 `pc` ディレクトリに移動して、Pythonスクリプトを実行します。
 
 ```sh
-python -m pipenv run python main.py
+uv run python main.py
 ```
 
 ターミナル画面と、操作用のウィンドウが起動します。
@@ -46,7 +83,7 @@ python -m pipenv run python main.py
 実行時のコマンドライン引数を用いてIPアドレスを指定してください。
 
 ```sh
-python -m pipenv run python main.py --host <ip_addr>
+uv run python main.py --host <ip_addr>
 ```
 
 ## G29で運用する場合
